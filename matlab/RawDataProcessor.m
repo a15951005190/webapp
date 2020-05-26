@@ -66,25 +66,96 @@ classdef RawDataProcessor
         username_ = 'cloudlab';
         passwd_ = 'CloudLab-!@#$';
         conn_;
+        
+        draw_pic;
+        save_to_db;
     end %private properties
 
     methods (Access=public)
+        function self = init_(self)
+            self.eid = [];
+            self.len = [];
+
+            self.Number_period = [];
+            self.sf  = []; % sampling_frequency;
+            self.bpoint = [];
+
+            self.max_angle = [];
+            self.min_angle = [];
+
+            self.max_torque = [];
+            self.min_torque = [];
+            self.theta_8 = [];
+            self.torque_8 = [];
+
+            self.max_shearforce = [];
+            self.min_shearforce = [];
+            self.max_shearstrain = [];
+            self.min_shearstrain = [];
+            self.max_shearforce_improved = [];
+            self.min_shearforce_per_improved = [];
+
+            self.TauMaxMPa = [];
+            self.TauMinMPa = [];
+            self.TauMeanMPa = [];
+            self.Strain_TotMax = [];
+            self.Strain_TotMin = [];
+            self.Strain_TotMean = [];
+            self.StrainRate = [];
+            
+            self.G_right = [];
+            self.G_left = [];
+            self.G_mean = [];
+            self.Tao_max = [];
+            
+            self.G_left_value=[];
+            self.G_right_alue=[];
+            self.nHardening=[];
+            self.KMPa=[];
+            self.Strain_Plastic=[];
+            self.Strain_Elastic=[];
+            self.Strain_amplitude=[];
+            self.Tau_MaxMPa=[];
+            self.Tau_amplitudeMPa=[];
+
+            self.strain_total = [];
+            self.g_mean_mean = [];
+            self.tau_max_mean = [];
+
+            self.frequency_ =0.1;
+            self.sampling_ = 16;
+            self.radius_ = 3;
+            self.length_ = 20;
+
+            self.pic_save_path = [];
+            self.pic_index = 1;
+            self.G_loop_no = 100;
+            self.first_loop = 1;
+            
+            self.draw_pic = false;
+            self.save_to_db = false;
+        end % init_
+
         function self = raw_data_by_param(self, path, ftype)
             [Angle, Torque] = read_raw_data_(self, path, ftype);
             self = process_rawdata_(self, Angle, Torque);
             self =  force_strain_(self);
         end % raw_data
 
-        function self = raw_data_from_db_by_eid(self, eid)
+        function self = raw_data_from_db_by_eid(self, eid, draw_pic, save_to_db)
             self = init_(self);
+            self.draw_pic = draw_pic;
+            self.save_to_db = save_to_db;
 
             self.eid = eid;
             self.G_loop_no = 100;
             self.conn_ = database(self.datasource_, self.username_, ...,
                 self.passwd_);
             self = raw_data_from_db_by_eid_(self);
-            save_to_db_step_1_(self);
-            % % save_to_db_step_2_(self);
+            if self.save_to_db
+                save_to_db_step_1_(self);
+                % % save_to_db_step_2_(self);
+            end
             close(self.conn_);
         end % raw_data_from_db_by_eid
 
@@ -118,7 +189,7 @@ classdef RawDataProcessor
             [Angle, Torque] = read_raw_data_(self, path, ftype);
             self.len = length(Torque);
             self = process_rawdata_(self, Angle, Torque);
-            self = force_strain_(self, Angle, Torque);
+            self = force_strain_(self);
             self = plot_loops_(self, Torque, Angle);
         end % raw_data
 
@@ -309,18 +380,18 @@ classdef RawDataProcessor
             
 
             %去除坏点
-            max_angle_per_mean=mean(self.max_angle);
-            max_angle_per_std=std(self.max_angle);
-            min_angle_per_mean=mean(self.min_angle);
-            min_angle_per_std=std(self.min_angle);
-            for i=1:self.Number_period+1
-                if (self.max_angle(i,1)>(max_angle_per_mean(1,1)+3*max_angle_per_std(1,1)))||(self.max_angle(i,1)<(max_angle_per_mean(1,1)+3*max_angle_per_std(1,1)))
-                    self.max_angle(i,1)=max_angle_per_mean(1,1);
-                end
-                if (self.min_angle(i,1)>(min_angle_per_mean(1,1)+3*min_angle_per_std(1,1)))||(self.min_angle(i,1)<(min_angle_per_mean(1,1)+3*min_angle_per_std(1,1)))
-                    self.min_angle(i,1)=min_angle_per_mean(1,1);
-                end
-            end
+            %max_angle_per_mean=mean(self.max_angle);
+            %max_angle_per_std=std(self.max_angle);
+            %min_angle_per_mean=mean(self.min_angle);
+            %min_angle_per_std=std(self.min_angle);
+            %for i=1:self.Number_period+1
+            %    if (self.max_angle(i,1)>(max_angle_per_mean(1,1)+3*max_angle_per_std(1,1)))||(self.max_angle(i,1)<(max_angle_per_mean(1,1)+3*max_angle_per_std(1,1)))
+            %        self.max_angle(i,1)=max_angle_per_mean(1,1);
+            %    end
+            %    if (self.min_angle(i,1)>(min_angle_per_mean(1,1)+3*min_angle_per_std(1,1)))||(self.min_angle(i,1)<(min_angle_per_mean(1,1)+3*min_angle_per_std(1,1)))
+            %        self.min_angle(i,1)=min_angle_per_mean(1,1);
+            %    end
+            %end
 
             
             self = plot_two_variable_(self, self.max_angle, self.min_angle, 'o');
@@ -339,7 +410,7 @@ classdef RawDataProcessor
             self = plot_two_variable_(self, self.max_torque, self.min_torque, 'v');
         end % process_rawdata_
 
-        function self = force_strain_(self, Angle, Torque)
+        function self = force_strain_(self)
             %扭矩转为应力
             self.radius_ = self.radius_ * 10^(-3);
             self.length_ = self.length_ * 10^(-3);
@@ -404,33 +475,39 @@ classdef RawDataProcessor
         end % process_rawdata_
 
         function self = plot_two_variable_(self, A, B, type)
-            fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
-            plot(A(:,2), A(:,1), [type 'b']);
-            hold on;
-            plot(B(:,2), B(:,1), [type 'r']);
-            saveas(fig, self.pic_save_path(self.pic_index,:));
-            close(fig);
-            self.pic_index = self.pic_index + 1;
+            if self.draw_pic
+                fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
+                plot(A(:,2), A(:,1), [type 'b']);
+                hold on;
+                plot(B(:,2), B(:,1), [type 'r']);
+                saveas(fig, self.pic_save_path(self.pic_index,:));
+                close(fig);
+                self.pic_index = self.pic_index + 1;
+            end
         end % plot_two_variable_
         
         function self = plot_two_lines_2_(self, A, B)
-            fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
-            plot(A(:,2), A(:,1));
-            hold on;
-            plot(A(:,2), B);
-            saveas(fig, self.pic_save_path(self.pic_index,:));
-            close(fig);
-            self.pic_index = self.pic_index + 1;
+            if self.draw_pic
+                fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
+                plot(A(:,2), A(:,1));
+                hold on;
+                plot(A(:,2), B);
+                saveas(fig, self.pic_save_path(self.pic_index,:));
+                close(fig);
+                self.pic_index = self.pic_index + 1;
+            end
         end % plot_two_lines_2_
 
         function self = plot_two_lines_1_(self, A, B)
-            fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
-            plot(A(:,2), A(:,1));
-            hold on;
-            plot(B(:,2), B(:,1));
-            saveas(fig, self.pic_save_path(self.pic_index,:));
-            close(fig);
-            self.pic_index = self.pic_index + 1;
+            if self.draw_pic
+                fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
+                plot(A(:,2), A(:,1));
+                hold on;
+                plot(B(:,2), B(:,1));
+                saveas(fig, self.pic_save_path(self.pic_index,:));
+                close(fig);
+                self.pic_index = self.pic_index + 1;
+            end
         end % plot_two_lines_1_
 
         function self = plot_loops_(self, Torque, Angle)
@@ -461,76 +538,17 @@ classdef RawDataProcessor
         end % plot_loops_
                 
         function self = plot_single_loop__(self, period, Shearstrain, Shearforce)
-            fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
-            plot(Shearstrain((period-1) * self.sf + 1 : period * self.sf), Shearforce((period-1) * self.sf + 1 : period * self.sf));
-            xlabel('\epsilon');
-            ylabel('\sigma/MPa');
-            title(['Specified Hysteresis Loops' int2str(period)]);
-            saveas(fig, self.pic_save_path(self.pic_index,:));
-            close(fig);
-            self.pic_index = self.pic_index + 1;
+            if self.draw_pic
+                fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
+                plot(Shearstrain((period-1) * self.sf + 1 : period * self.sf), Shearforce((period-1) * self.sf + 1 : period * self.sf));
+                xlabel('\epsilon');
+                ylabel('\sigma/MPa');
+                title(['Specified Hysteresis Loops' int2str(period)]);
+                saveas(fig, self.pic_save_path(self.pic_index,:));
+                close(fig);
+                self.pic_index = self.pic_index + 1;
+            end
         end % plot_single_loop__
-        
-        function self = init_(self)
-            self.eid = [];
-            self.len = [];
-
-            self.Number_period = [];
-            self.sf  = []; % sampling_frequency;
-            self.bpoint = [];
-
-            self.max_angle = [];
-            self.min_angle = [];
-
-            self.max_torque = [];
-            self.min_torque = [];
-            self.theta_8 = [];
-            self.torque_8 = [];
-
-            self.max_shearforce = [];
-            self.min_shearforce = [];
-            self.max_shearstrain = [];
-            self.min_shearstrain = [];
-            self.max_shearforce_improved = [];
-            self.min_shearforce_per_improved = [];
-
-            self.TauMaxMPa = [];
-            self.TauMinMPa = [];
-            self.TauMeanMPa = [];
-            self.Strain_TotMax = [];
-            self.Strain_TotMin = [];
-            self.Strain_TotMean = [];
-            self.StrainRate = [];
-            
-            self.G_right = [];
-            self.G_left = [];
-            self.G_mean = [];
-            self.Tao_max = [];
-            
-            self.G_left_value=[];
-            self.G_right_alue=[];
-            self.nHardening=[];
-            self.KMPa=[];
-            self.Strain_Plastic=[];
-            self.Strain_Elastic=[];
-            self.Strain_amplitude=[];
-            self.Tau_MaxMPa=[];
-            self.Tau_amplitudeMPa=[];
-
-            self.strain_total = [];
-            self.g_mean_mean = [];
-            self.tau_max_mean = [];
-
-            self.frequency_ =0.1;
-            self.sampling_ = 16;
-            self.radius_ = 3;
-            self.length_ = 20;
-
-            self.pic_save_path = [];
-            self.pic_index = 1;
-            self.G_loop_no = 100;
-            self.first_loop = 1;
-        end % init_
 
         function self = strain_force_(self, Shearstrain, Shearforce)
             good = 0;
@@ -575,17 +593,19 @@ classdef RawDataProcessor
         end % strain_force_
         
         function self = draw_log_pic_(self)
-            fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
-            semilogx((1 : self.Number_period) * 0.001, self.G_mean, '-o');
-            saveas(fig, self.pic_save_path(self.pic_index,:));
-            close(fig);
-            self.pic_index = self.pic_index + 1;
+            if self.draw_pic
+                fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
+                semilogx((1 : self.Number_period) * 0.001, self.G_mean, '-o');
+                saveas(fig, self.pic_save_path(self.pic_index,:));
+                close(fig);
+                self.pic_index = self.pic_index + 1;
 
-            fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
-            semilogx((1 : self.Number_period) * 0.001, self.Tao_max, '-o');
-            saveas(fig, self.pic_save_path(self.pic_index,:));
-            close(fig);
-            self.pic_index = self.pic_index + 1;
+                fig = figure('Position',  [100, 100, 1024, 768], 'visible', 'off');
+                semilogx((1 : self.Number_period) * 0.001, self.Tao_max, '-o');
+                saveas(fig, self.pic_save_path(self.pic_index,:));
+                close(fig);
+                self.pic_index = self.pic_index + 1;
+            end
         end
     end % private methods
 end %classdef
