@@ -1,11 +1,18 @@
-function [tauMax_temp,a1,a2,a3,N_all] = G_Tau_N(eStrain,tau,N_a)
-fnum=160;%周期采样点
+function [tauMax_temp,a1,a2,a3,N_all] = G_Tau_N(eStrain,tau,N_a, fnum)
 eSpMax_Index=[];
 eSpMin_Index=[];
 a1=[];
 b1=[];
 a2=[];
 b2=[];
+
+delta = 0;
+if fnum < 200
+    delta = 30;
+else
+    delta = 40;
+end
+
 % N_HystLoop=100;
 for k=1:N_a %计算周期数
     ftau=tau((k-1)*fnum+1:k*fnum);
@@ -32,10 +39,10 @@ for k=1:N_a %计算周期数
     eSpMax_Index=[eSpMax_Index,pMaxIndex(1)];
     pMaxIndex=[];
     
-   if(eSpMax_Index(k)<130)
+   if(eSpMax_Index(k)<(fnum - delta))
        
-    x=fStrain_temp(eSpMax_Index(k):(eSpMax_Index(k)+30));
-    y=ftau_temp(eSpMax_Index(k):(eSpMax_Index(k)+30));
+    x=fStrain_temp(eSpMax_Index(k):(eSpMax_Index(k)+delta));
+    y=ftau_temp(eSpMax_Index(k):(eSpMax_Index(k)+delta));
     p=polyfit(x,y,1);
 
     
@@ -44,11 +51,11 @@ for k=1:N_a %计算周期数
     
     eSp_Plastic(k)=-b1(k)/a1(k);
    else
-         x1=fStrain_temp(eSpMax_Index(k):160);
-        x2=fStrain_temp(1:(30-(160-eSpMax_Index(k))));
+         x1=fStrain_temp(eSpMax_Index(k):fnum);
+        x2=fStrain_temp(1:(delta-(fnum-eSpMax_Index(k))));
         x=[x1',x2'];
-                y1=ftau_temp(eSpMax_Index(k):160);
-        y2=ftau_temp(1:(30-(160-eSpMax_Index(k))));
+                y1=ftau_temp(eSpMax_Index(k):fnum);
+        y2=ftau_temp(1:(delta-(fnum-eSpMax_Index(k))));
         y=[y1',y2'];
   
     p=polyfit(x,y,1);
@@ -64,10 +71,10 @@ for k=1:N_a %计算周期数
     eSpMin_Index=[eSpMin_Index,pMinIndex(1)];
     pMinIndex=[];
     
-   if(eSpMin_Index(k)<130)
+   if(eSpMin_Index(k)<(fnum - delta))
        
-    x=fStrain_temp(eSpMin_Index(k):(eSpMin_Index(k)+30));
-    y=ftau_temp(eSpMin_Index(k):(eSpMin_Index(k)+30));
+    x=fStrain_temp(eSpMin_Index(k):(eSpMin_Index(k)+delta));
+    y=ftau_temp(eSpMin_Index(k):(eSpMin_Index(k)+delta));
     p=polyfit(x,y,1);
 
     
@@ -76,11 +83,11 @@ for k=1:N_a %计算周期数
     
     eSp_Plastic(k)=-b1(k)/a1(k);
    else
-         x1=fStrain_temp(eSpMin_Index(k):160);
-        x2=fStrain_temp(1:(30-(160-eSpMin_Index(k))));
+         x1=fStrain_temp(eSpMin_Index(k):fnum);
+        x2=fStrain_temp(1:(delta-(fnum-eSpMin_Index(k))));
         x=[x1',x2'];
-                y1=ftau_temp(eSpMin_Index(k):160);
-        y2=ftau_temp(1:(30-(160-eSpMin_Index(k))));
+                y1=ftau_temp(eSpMin_Index(k):fnum);
+        y2=ftau_temp(1:(delta-(fnum-eSpMin_Index(k))));
         y=[y1',y2'];
   
     p=polyfit(x,y,1);

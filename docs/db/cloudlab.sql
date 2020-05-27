@@ -11,7 +11,7 @@
  Target Server Version : 80020
  File Encoding         : 65001
 
- Date: 25/05/2020 14:54:52
+ Date: 27/05/2020 15:44:16
 */
 
 SET NAMES utf8mb4;
@@ -97,7 +97,7 @@ CREATE TABLE `rdp_data_1`  (
   PRIMARY KEY (`rdpd_id`) USING BTREE,
   INDEX `fk_rdpd_exp`(`eid`) USING BTREE,
   CONSTRAINT `fk_rdpd_exp` FOREIGN KEY (`eid`) REFERENCES `experiment` (`eid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for rdp_result
@@ -136,7 +136,7 @@ CREATE TABLE `rdp_result`  (
   PRIMARY KEY (`expid`) USING BTREE,
   UNIQUE INDEX `unique_eid`(`eid`) USING BTREE,
   CONSTRAINT `fk_rdp_exp` FOREIGN KEY (`eid`) REFERENCES `experiment` (`eid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for specimen
@@ -192,6 +192,12 @@ CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_rdpd_exp` AS select `r
 -- ----------------------------
 DROP VIEW IF EXISTS `v_specimen`;
 CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_specimen` AS select `s`.`sid` AS `sid`,`s`.`sname` AS `sname`,`s`.`mid` AS `mid`,`s`.`radius` AS `radius`,`s`.`length` AS `length`,`m`.`mname` AS `mname`,`m`.`en_name` AS `en_name`,`m`.`standard` AS `standard`,`m`.`properties` AS `properties` from (`specimen` `s` join `material` `m` on((`s`.`mid` = `m`.`mid`)));
+
+-- ----------------------------
+-- View structure for v_specimen_params
+-- ----------------------------
+DROP VIEW IF EXISTS `v_specimen_params`;
+CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_specimen_params` AS select `r`.`expid` AS `expid`,`r`.`eid` AS `eid`,`r`.`period` AS `N`,`r`.`Tau_amplitudeMPa` AS `Strain`,`r`.`Tau_MaxMPa` AS `Tau`,`r`.`Strain_Plastic` AS `pStrain`,`r`.`Strain_Elastic` AS `eStrain`,`r`.`g_mean_mean` AS `E`,`e`.`ename` AS `ename`,`s`.`sname` AS `sname`,`m`.`mname` AS `mname`,`e`.`sid` AS `sid`,`s`.`mid` AS `mid` from (((`rdp_result` `r` join `experiment` `e` on((`r`.`eid` = `e`.`eid`))) join `specimen` `s` on((`e`.`sid` = `s`.`sid`))) join `material` `m` on((`s`.`mid` = `m`.`mid`)));
 
 -- ----------------------------
 -- Procedure structure for get_rdp_pic_save_path

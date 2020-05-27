@@ -1,4 +1,4 @@
-function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = HystLoop_DH(eStrain,tau,N_HystLoop, fnum)
+function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = HystLoop_DH(eStrain,tau,N_HystLoop,fnum)
     eSpMax_Index=[];
     eSpMin_Index=[];
     a1=[];
@@ -6,6 +6,14 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
     a2=[];
     b2=[];
     
+
+    delta = 0;
+    if fnum < 200
+        delta = 30;
+    else
+        delta = 40;
+    end
+
     % N_HystLoop=100;
     for k=1:N_HystLoop %计算周期数
         ftau=tau((k-1)*fnum+1:k*fnum);
@@ -32,10 +40,10 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
         eSpMax_Index=[eSpMax_Index,pMaxIndex(1)];
         pMaxIndex=[];
 
-       if(eSpMax_Index(k)<130)
+       if(eSpMax_Index(k)<(fnum - delta))
 
-        x=fStrain_temp(eSpMax_Index(k):(eSpMax_Index(k)+30));
-        y=ftau_temp(eSpMax_Index(k):(eSpMax_Index(k)+30));
+        x=fStrain_temp(eSpMax_Index(k):(eSpMax_Index(k)+delta));
+        y=ftau_temp(eSpMax_Index(k):(eSpMax_Index(k)+delta));
         size(x);
         size(y);
         p=polyfit(x,y,1);
@@ -46,11 +54,11 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
 
         eSp_Plastic(k)=-b1(k)/a1(k);
        else
-             x1=fStrain_temp(eSpMax_Index(k):160);
-            x2=fStrain_temp(1:(30-(160-eSpMax_Index(k))));
+             x1=fStrain_temp(eSpMax_Index(k):fnum);
+            x2=fStrain_temp(1:(delta-(fnum-eSpMax_Index(k))));
             x=[x1',x2'];
-                    y1=ftau_temp(eSpMax_Index(k):160);
-            y2=ftau_temp(1:(30-(160-eSpMax_Index(k))));
+                    y1=ftau_temp(eSpMax_Index(k):fnum);
+            y2=ftau_temp(1:(delta-(fnum-eSpMax_Index(k))));
             y=[y1',y2'];
 
         p=polyfit(x,y,1);
@@ -66,10 +74,10 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
         eSpMin_Index=[eSpMin_Index,pMinIndex(1)];
         pMinIndex=[];
 
-       if(eSpMin_Index(k)<130)
+       if(eSpMin_Index(k)<(fnum - delta))
 
-        x=fStrain_temp(eSpMin_Index(k):(eSpMin_Index(k)+30));
-        y=ftau_temp(eSpMin_Index(k):(eSpMin_Index(k)+30));
+        x=fStrain_temp(eSpMin_Index(k):(eSpMin_Index(k)+delta));
+        y=ftau_temp(eSpMin_Index(k):(eSpMin_Index(k)+delta));
         p=polyfit(x,y,1);
 
 
@@ -78,11 +86,11 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
 
         eSp_Plastic(k)=-b1(k)/a1(k);
        else
-             x1=fStrain_temp(eSpMin_Index(k):160);
-            x2=fStrain_temp(1:(30-(160-eSpMin_Index(k))));
+             x1=fStrain_temp(eSpMin_Index(k):fnum);
+            x2=fStrain_temp(1:(delta-(fnum-eSpMin_Index(k))));
             x=[x1',x2'];
-                    y1=ftau_temp(eSpMin_Index(k):160);
-            y2=ftau_temp(1:(30-(160-eSpMin_Index(k))));
+                    y1=ftau_temp(eSpMin_Index(k):fnum);
+            y2=ftau_temp(1:(delta-(fnum-eSpMin_Index(k))));
             y=[y1',y2'];
 
         p=polyfit(x,y,1);
@@ -109,10 +117,10 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
     else
         if(ft_index>20)
             x1_1=x2(1:ft_index-20);
-            x1_2=x2(160-(60-ft_index):160);
+            x1_2=x2(fnum-(60-ft_index):fnum);
             x1=[x1_1',x1_2'];
             y1_1=y2(1:ft_index-20);
-            y1_2=y2(160-(60-ft_index):160);
+            y1_2=y2(fnum-(60-ft_index):fnum);
             y1=[y1_1',y1_2'];
         end
     end
