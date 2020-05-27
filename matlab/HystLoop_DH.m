@@ -1,5 +1,4 @@
-function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = HystLoop_DH(eStrain,tau,N_HystLoop)
-    fnum=160;%周期采样点 
+function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = HystLoop_DH(eStrain,tau,N_HystLoop, fnum)
     eSpMax_Index=[];
     eSpMin_Index=[];
     a1=[];

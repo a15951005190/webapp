@@ -72,6 +72,25 @@ classdef RawDataProcessor
     end %private properties
 
     methods (Access=public)
+        function self = raw_data_from_db_by_eid(self, eid, draw_pic, save_to_db)
+            self = init_(self);
+            self.draw_pic = draw_pic;
+            self.save_to_db = save_to_db;
+
+            self.eid = eid;
+            self.G_loop_no = 100;
+            self.conn_ = database(self.datasource_, self.username_, ...,
+                self.passwd_);
+            self = raw_data_from_db_by_eid_(self);
+            if self.save_to_db
+                save_to_db_step_1_(self);
+                % % save_to_db_step_2_(self);
+            end
+            close(self.conn_);
+        end % raw_data_from_db_by_eid
+    end % public methods
+    
+    methods (Access=private)
         function self = init_(self)
             self.eid = [];
             self.len = [];
@@ -136,54 +155,18 @@ classdef RawDataProcessor
             self.save_to_db = false;
         end % init_
 
-        function self = raw_data_by_param(self, path, ftype)
-            [Angle, Torque] = read_raw_data_(self, path, ftype);
-            self = process_rawdata_(self, Angle, Torque);
-            self =  force_strain_(self);
-        end % raw_data
-
-        function self = raw_data_from_db_by_eid(self, eid, draw_pic, save_to_db)
-            self = init_(self);
-            self.draw_pic = draw_pic;
-            self.save_to_db = save_to_db;
-
-            self.eid = eid;
-            self.G_loop_no = 100;
-            self.conn_ = database(self.datasource_, self.username_, ...,
-                self.passwd_);
-            self = raw_data_from_db_by_eid_(self);
-            if self.save_to_db
-                save_to_db_step_1_(self);
-                % % save_to_db_step_2_(self);
-            end
-            close(self.conn_);
-        end % raw_data_from_db_by_eid
-
-        function self = raw_data(self)
-            self.conn_ = database(self.datasource_, self.username_, ...,
-                self.passwd_);
-
-            eid = get_all_eid_(self);
-            for i = 1 : length(eid)
-                fprintf("Experiment %d ... ", i);
-                [path, ftype, self.ename] = get_path_by_eid_(self, eid(i));
-                [Angle, Torque] = read_raw_data_(self, path, ftype);
-                fprintf("Length is %d ... ", length(Torque));
-                % insert_to_rawdata_table(self, eid(i), rawtable, Angle, Torque);
-                fprintf("Done.\n");
-            end
-
-            close(self.conn_);
-        end % raw_data
-    end % public methods
-
-    methods (Access=private)
+        
         function self = raw_data_from_db_by_eid_(self)
             [path, ftype, self.ename, self.pic_save_path] = get_path_by_eid_(self);
             try
                 mydir = strtrim(self.pic_save_path(1,:));
                 mkdir(mydir);
             catch
+            end
+            if ftype == 1
+                self.sampling_ = 33;
+            elseif ftype == 2
+                self.sampling_ = 16;
             end
             self.pic_index = self.pic_index + 1;
             [Angle, Torque] = read_raw_data_(self, path, ftype);
@@ -551,13 +534,14 @@ classdef RawDataProcessor
         end % plot_single_loop__
 
         function self = strain_force_(self, Shearstrain, Shearforce)
+            self.sf
             good = 0;
             while good == 0
                 [good, self.Strain_Plastic, self.Strain_Elastic, ...,
                     self.Strain_amplitude, self.Tau_MaxMPa, ...,
                     self.Tau_amplitudeMPa, gright, gleft, ~, ...,
                     self.KMPa,self.nHardening] = ...,
-                    HystLoop_DH(Shearstrain, Shearforce, self.G_loop_no);
+                    HystLoop_DH(Shearstrain, Shearforce, self.G_loop_no, self.sf);
                 if good == 1
                     self.G_left_value=gleft/1000;
                     self.G_right_alue=gright/1000;
@@ -572,7 +556,7 @@ classdef RawDataProcessor
             while good == 0
                 [good, ~,~,self.Strain_amplitude,~,self.Tau_amplitudeMPa, ...,
                     ~,~,~,~,~] = HystLoop_DH(...,
-                    Shearstrain,Shearforce, self.first_loop);
+                    Shearstrain,Shearforce, self.first_loop, self.sf);
                 if good == 0
                     self.first_loop = self.first_loop + 5;
                 end
@@ -580,7 +564,7 @@ classdef RawDataProcessor
             fprintf("Fisrt LOOP %d\n", self.first_loop);
 
             [self.Tao_max,self.G_right,self.G_left,self.G_mean,~] = ...,
-                G_Tau_N(Shearstrain, Shearforce, self.Number_period);
+                G_Tau_N(Shearstrain, Shearforce, self.G_loop_no, self.sf);
             self.strain_total = max(self.max_shearstrain(:,1)) - min(self.min_shearstrain(:,1));
             self.g_mean_mean = mean(self.G_mean);
             self.tau_max_mean = max(self.max_shearforce_improved);
@@ -589,7 +573,7 @@ classdef RawDataProcessor
             self.G_mean = self.G_mean';
             self.Tao_max = self.Tao_max';
 
-            self = draw_log_pic_(self);
+            % self = draw_log_pic_(self);
         end % strain_force_
         
         function self = draw_log_pic_(self)
