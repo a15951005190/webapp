@@ -1,4 +1,4 @@
-function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = HystLoop_DH(eStrain,tau,N_HystLoop,fnum)
+function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = HystLoop_DH(eStrain,tau,N_HystLoop, fnum)
     eSpMax_Index=[];
     eSpMin_Index=[];
     a1=[];
@@ -6,7 +6,6 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
     a2=[];
     b2=[];
     
-
     delta = 0;
     if fnum < 200
         delta = 30;
@@ -40,7 +39,7 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
         eSpMax_Index=[eSpMax_Index,pMaxIndex(1)];
         pMaxIndex=[];
 
-       if(eSpMax_Index(k)<(fnum - delta))
+       if(eSpMax_Index(k) < (fnum - delta))
 
         x=fStrain_temp(eSpMax_Index(k):(eSpMax_Index(k)+delta));
         y=ftau_temp(eSpMax_Index(k):(eSpMax_Index(k)+delta));
@@ -69,7 +68,7 @@ function [good, Strain_p,Strain_e,Strain_a,Tau_m,Tau_a,G_right,G_left,G,K,nn] = 
 
         eSp_Plastic(k)=-b1(k)/a1(k);
        end
-    %×ó²àG
+    % ×ó²àG
         pMinIndex=find(fStrain_temp==epsMin_temp(k));
         eSpMin_Index=[eSpMin_Index,pMinIndex(1)];
         pMinIndex=[];
