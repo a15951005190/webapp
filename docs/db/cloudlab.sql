@@ -11,7 +11,7 @@
  Target Server Version : 80020
  File Encoding         : 65001
 
- Date: 27/05/2020 15:44:16
+ Date: 28/05/2020 11:20:59
 */
 
 SET NAMES utf8mb4;
@@ -136,7 +136,7 @@ CREATE TABLE `rdp_result`  (
   PRIMARY KEY (`expid`) USING BTREE,
   UNIQUE INDEX `unique_eid`(`eid`) USING BTREE,
   CONSTRAINT `fk_rdp_exp` FOREIGN KEY (`eid`) REFERENCES `experiment` (`eid`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for specimen
@@ -222,8 +222,8 @@ BEGIN
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'min_force.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'strain.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_all.png');
-	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'g_mean_log.png');
-	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'tao_max_log.png');
+	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'g_mean.png');
+	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'tao_max.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_1.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_100.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_n1.png');
@@ -253,8 +253,8 @@ BEGIN
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'min_force.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'strain.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_all.png');
-	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'g_mean_log.png');
-	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'tao_max_log.png');
+	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'g_mean.png');
+	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'tao_max.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_1.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_100.png');
 	INSERT INTO tt_pic_path(`path`) SELECT CONCAT(pic_path, 'loop_n1.png');
