@@ -61,6 +61,16 @@ classdef RawDataProcessor_nodb
     methods (Access=public)
         function self = process_raw_data(self, path, ftype)
             self.init_();
+            if ftype == 2
+                self.sampling_ = 16;
+                self.radius_ = 3;
+                self.length_ = 20;
+            else
+                self.sampling_ = 32;
+                self.radius_ = 3.065;
+                self.length_ = 11;
+            end
+
             [Angle, Torque] = read_raw_data_(self, path, ftype);
             self.len = length(Torque);
             self = process_rawdata_(self, Angle, Torque);
@@ -160,7 +170,7 @@ classdef RawDataProcessor_nodb
         function self = process_rawdata_(self, Angle, Torque)
             self.sf = self.sampling_/self.frequency_;
 
-            %´¦ÀíTheta, Torque
+            %ï¿½ï¿½ï¿½ï¿½Theta, Torque
             Num=length(Angle);
             self.Number_period = 0;
             for period = 1:Num
@@ -199,7 +209,7 @@ classdef RawDataProcessor_nodb
 
             self = plot_two_variable_(self, self.max_angle, self.min_angle, 'o');
 
-            % È¥³ý»µµã
+            % È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             max_angle_per_mean=mean(self.max_angle);
             max_angle_per_std=std(self.max_angle);
             min_angle_per_mean=mean(self.min_angle);
@@ -215,14 +225,14 @@ classdef RawDataProcessor_nodb
 
             self = plot_two_variable_(self, self.max_angle, self.min_angle, 'o');
 
-            % Torque ¶ÔÖÐ²Ù×÷
+            % Torque ï¿½ï¿½ï¿½Ð²ï¿½ï¿½ï¿½
             move_distance = 0.5 * (self.max_torque(:,1) - self.min_torque(:,1)) - self.max_torque(:,1);
             self.max_torque(:,1) = self.max_torque(:,1) + move_distance(:,1);
             self.min_torque(:,1) = self.min_torque(:,1) + move_distance(:,1);
             
             self = plot_two_variable_(self, self.max_torque, self.min_torque, 'v');
             
-            % Æ½»¬ torque
+            % Æ½ï¿½ï¿½ torque
             self.max_torque(:,1)=smoothdata(self.max_torque(:,1), 'movmedian');
             self.min_torque(:,1)=smoothdata(self.min_torque(:,1), 'movmedian');
             
@@ -230,13 +240,13 @@ classdef RawDataProcessor_nodb
         end % process_rawdata_
 
         function self = force_strain_(self)
-            %Å¤¾Ø×ªÎªÓ¦Á¦
+            %Å¤ï¿½ï¿½×ªÎªÓ¦ï¿½ï¿½
             self.radius_ = 3;
             self.length_ = 20;
 
             self.radius_ = self.radius_ * 10^(-3);
             self.length_ = self.length_ * 10^(-3);
-            Wp=(((2 * self.radius_)^3) * pi) / self.sampling_;
+            Wp=(((2 * self.radius_)^3) * pi) / 16;
 
             self.max_shearforce = zeros(size(self.max_torque));
             self.min_shearforce = zeros(size(self.max_torque));
@@ -248,7 +258,7 @@ classdef RawDataProcessor_nodb
             mean_shearforce_per(:, 1) = 0.5 * (self.max_shearforce(:, 1) + self.min_shearforce(:, 1));
             mean_shearforce_per(:, 2) = self.min_torque(:, 2);
 
-            %Ñ°ÕÒ¶Ïµã
+            %Ñ°ï¿½Ò¶Ïµï¿½
             % bpointmaxtirx = self.max_shearforce(self.max_shearforce(:,1) - 0.7 * self.max_shearforce(1,1) < 2, :);
             % s = size(bpointmaxtirx);
             % if s(1) == 0
@@ -263,7 +273,7 @@ classdef RawDataProcessor_nodb
             self.min_shearforce((self.bpoint : self.Number_period + 1), : ) = [];
             mean_shearforce_per((self.bpoint : self.Number_period + 1), : ) =[];
 
-            %½Ç¶È×ªÎªÓ¦±ä
+            %ï¿½Ç¶ï¿½×ªÎªÓ¦ï¿½ï¿½
             self.max_shearstrain = zeros(size(self.max_angle));
             self.min_shearstrain = zeros(size(self.max_angle));
             mean_shearstrain_per = zeros(size(self.max_angle));
@@ -279,7 +289,7 @@ classdef RawDataProcessor_nodb
             self.min_shearstrain([self.bpoint : self.Number_period + 1], : ) = [];
             mean_shearstrain_per([self.bpoint : self.Number_period + 1], : ) = [];
 
-            % Æ½»¬Ó¦Á¦
+            % Æ½ï¿½ï¿½Ó¦ï¿½ï¿½
             self.max_shearforce_improved = smoothdata(self.max_shearforce(:,1),'movmedian');
             self.min_shearforce_per_improved = smoothdata(self.min_shearforce(:,1),'movmedian');
             
@@ -318,9 +328,9 @@ classdef RawDataProcessor_nodb
         end % plot_two_lines_1_
 
         function self = plot_loops_(self, Torque, Angle)
-            Wp=(((2 * self.radius_)^3) * pi) / self.sampling_;
+            Wp=(((2 * self.radius_)^3) * pi) / 16;
 
-            %»·
+            %ï¿½ï¿½
             Shearforce  = 10^(-6) * Torque(:,1)/Wp;
             Shearstrain = self.radius_ * Angle(:,1)/self.length_;
 
@@ -361,7 +371,7 @@ classdef RawDataProcessor_nodb
                     self.Strain_amplitude, self.Tau_MaxMPa, ...,
                     self.Tau_amplitudeMPa, gright, gleft, ~, ...,
                     self.KMPa,self.nHardening] = ...,
-                    HystLoop_DH(Shearstrain, Shearforce, self.G_loop_no);
+                    HystLoop_DH(Shearstrain, Shearforce, self.G_loop_no, self.sf);
                 if good == 1
                     self.G_left_value=gleft/1000;
                     self.G_right_alue=gright/1000;
@@ -376,7 +386,7 @@ classdef RawDataProcessor_nodb
             while good == 0
                 [good, ~,~,self.Strain_amplitude,~,self.Tau_amplitudeMPa, ...,
                     ~,~,~,~,~] = HystLoop_DH(...,
-                    Shearstrain,Shearforce, self.first_loop);
+                    Shearstrain,Shearforce, self.first_loop, self.sf);
                 if good == 0
                     self.first_loop = self.first_loop + 5;
                 end
@@ -384,7 +394,7 @@ classdef RawDataProcessor_nodb
             fprintf("Fisrt LOOP %d\n", self.first_loop);
 
             [self.Tao_max,self.G_right,self.G_left,self.G_mean,~] = ...,
-                G_Tau_N(Shearstrain, Shearforce, self.Number_period);
+                G_Tau_N(Shearstrain, Shearforce, self.Number_period, self.sf);
             self.strain_total = max(self.max_shearstrain(:,1)) - min(self.min_shearstrain(:,1));
             self.g_mean_mean = mean(self.G_mean);
             self.tau_max_mean = max(self.max_shearforce_improved);
@@ -398,10 +408,10 @@ classdef RawDataProcessor_nodb
         
         function self = draw_log_pic_(self)
             figure('Position',  [100, 100, 1024, 768], 'visible', 'on');
-            semilogx((1 : self.Number_period) * 0.001, self.G_mean, '-o');
+            plot((1 : self.Number_period) * 0.001, self.G_mean, '-o');
 
             figure('Position',  [100, 100, 1024, 768], 'visible', 'on');
-            semilogx((1 : self.Number_period) * 0.001, self.Tao_max, '-o');
+            plot((1 : self.Number_period) * 0.001, self.Tao_max, '-o');
         end
     end % private methods
 end %classdef
