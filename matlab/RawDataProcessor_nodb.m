@@ -61,6 +61,7 @@ classdef RawDataProcessor_nodb
     methods (Access=public)
         function self = process_raw_data(self, path, ftype)
             self.init_();
+
             if ftype == 2
                 self.sampling_ = 16;
                 self.radius_ = 3;
@@ -74,7 +75,7 @@ classdef RawDataProcessor_nodb
             [Angle, Torque] = read_raw_data_(self, path, ftype);
             self.len = length(Torque);
             self = process_rawdata_(self, Angle, Torque);
-            self = force_strain_(self);
+            self = force_strain_(self, ftype);
             self = plot_loops_(self, Torque, Angle);
         end % raw_data
     end % public methods
@@ -239,10 +240,17 @@ classdef RawDataProcessor_nodb
             self = plot_two_variable_(self, self.max_torque, self.min_torque, 'v');
         end % process_rawdata_
 
-        function self = force_strain_(self)
+        function self = force_strain_(self, ftype)
             %Ť��תΪӦ��
-            self.radius_ = 3;
-            self.length_ = 20;
+            if ftype == 2
+                self.sampling_ = 16;
+                self.radius_ = 3;
+                self.length_ = 20;
+            else
+                self.sampling_ = 32;
+                self.radius_ = 3.065;
+                self.length_ = 11;
+            end
 
             self.radius_ = self.radius_ * 10^(-3);
             self.length_ = self.length_ * 10^(-3);
